@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>resources/icons/edit_add.png</file>
+        <file>resources/icons/edit_remove.png</file>
+        <file>resources/icons/button_start.png</file>
+        <file>resources/icons/button_stop.png</file>
+        <file>resources/button_resume.png</file>
+    </qresource>
+</RCC>

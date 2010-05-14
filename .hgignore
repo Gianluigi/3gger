@@ -1,0 +1,13 @@
+# use glob syntax.
+syntax: glob
+
+*.obj
+*.o
+*.moc
+
+
+# switch to regexp syntax.
+syntax: regexp
+^Crystal Clear/
+gui\.app
+\.DS_Store
