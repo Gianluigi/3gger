@@ -11,3 +11,9 @@ syntax: regexp
 ^Crystal Clear/
 gui\.app
 \.DS_Store
+plist
+moc_
+xcodeproj
+qrc_
+ui_
+tests
