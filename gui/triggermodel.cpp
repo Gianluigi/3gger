@@ -1,3 +1,5 @@
+#include <QDomElement>
+#include <QDebug>
 #include "triggermodel.h"
 
 TriggerModel::TriggerModel(QObject *parent) :
@@ -72,6 +74,8 @@ QVariant TriggerModel::data(const QModelIndex &index, int role) const
          else if (index.column() == 8)
              return row->o8 ? Qt::Checked : Qt::Unchecked;
      }
+     if (role == Qt::TextAlignmentRole && index.column() >= 1 && index.column()<= 8) return Qt::AlignCenter;
+
      return QVariant();
 }
 
@@ -164,7 +168,7 @@ bool TriggerModel::setData(const QModelIndex &index, const QVariant &value, int 
                 record->o8 = value.toBool();
 \*/
             else if (index.column() == 9)
-                record->length = value.toInt();
+                record->length = value.toInt() > 0 ? value.toInt() : 0;
 
             dataSource.replace(row, record);
            // emit(dataChanged(index, index));
@@ -210,4 +214,84 @@ Qt::ItemFlags TriggerModel::flags(const QModelIndex &index) const
         return Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     else
         return  Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+}
+QString TriggerModel::getModelXml()
+{
+    QDomDocument doc("RtStim");
+    QDomElement root = doc.createElement("rtstim");
+    doc.appendChild(root);
+
+    QDomElement setting = doc.createElement("settings");
+    setting.setAttribute("tr", 1000);
+    setting.setAttribute("count", 10);
+    setting.setAttribute("size", 500);
+    root.appendChild(setting);
+
+    for (int i=0; i<dataSource.size(); i++)
+    {
+        TriggerRecord *r = dataSource.at(i);
+        QDomElement tag = doc.createElement("stimulus");
+        tag.setAttribute("name", r->name);
+        tag.setAttribute("length", r->length);
+        int code = r->o1 + r->o2 * 2 + r->o3 * 4 + r->o4 * 8 + r->o5 * 16 + r->o6 * 32 + r->o7 * 64 + r->o8 * 128;
+        tag.setAttribute("code", code);
+
+        root.appendChild(tag);
+    }
+
+    return doc.toString();
+}
+
+void TriggerModel::fillModelFromXml(QString xml)
+{
+    
+    QDomDocument doc("RtStim");
+
+    doc.setContent(xml);
+    // print out the element names of all elements that are direct children
+    // of the outermost element.
+    QDomElement root = doc.documentElement();
+    
+    QDomNode n = root.firstChild();
+    dataSource.clear();
+    while(!n.isNull()) {
+        QDomElement e = n.toElement(); // try to convert the node to an element.
+        if(!e.isNull()) {
+            if (e.tagName().toLower() == "settings")
+            {
+                //nothing yet
+            }
+            else if (e.tagName().toLower() == "stimulus")
+            {
+                QString name = e.attribute("name", "--- invalid attribute ---");
+                int length = e.attribute("length", "0").toInt();
+                int code = e.attribute("code", 0).toInt();
+
+                if (name != "--- invalid attribute ---" && length > 0 && code > 0)
+                {
+                    TriggerRecord *r = new TriggerRecord();
+                    r->name = name;
+                    r->length = length;
+                    r->o1 = code & 1;
+                    r->o2 = code & 2;
+                    r->o3 = code & 4;
+                    r->o4 = code & 8;
+                    r->o5 = code & 16;
+                    r->o6 = code & 32;
+                    r->o7 = code & 64;
+                    r->o8 = code & 128;
+
+                    dataSource.append(r);
+                }
+            }
+
+            qDebug() << qPrintable(e.tagName()) << endl; // the node really is an element.
+        }
+        n = n.nextSibling();
+    }
+
+
+    dataChanged(createIndex(0,0), createIndex(dataSource.size()-1, 9));
+
+
 }

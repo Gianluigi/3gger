@@ -20,6 +20,9 @@ private:
     Ui::eTriggerMain *ui;
 
 private slots:
+    void on_actionSave_triggered();
+    void on_actionOpen_triggered();
+    void on_pushStart_clicked();
     void on_pushRemove_clicked();
     void on_pushAdd_clicked();
 };
