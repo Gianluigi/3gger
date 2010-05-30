@@ -1,12 +1,32 @@
-/* 
+/* vi:ts=2 sw=2: 
 ** 
 **  Author: Gianluigi Rubino
 **  http://www.grsoft.org
 */
 
 //define version and welcome message here:
-#define WELCOME_MESSAGE "rtstim v0.1 - ready"
 #define DEFAULT_TIMEOUT 10000
+#define MAX_STIMULI     100
+
+// Error messages
+#define ERR_NOT_READY           "400 Error: Not in ready status, do programming first !"
+#define ERR_PROGRAMMING_ABORT   "401 Error: Programming aborted !"
+#define ERR_MODE_UNKNOWN        "402 Error: Unknow mode, swithcing to WAITING!"
+#define ERR_STIMULATION_ABORT   "403 Error: Stimulation aborted !"
+#define ERR_TOO_MANY_STIM       "404 Error: too many stimuli defined !"
+
+// Info messages
+#define PROGRAMMING_OK          "201 Programming OK, Ready to stimulate"
+#define WELCOME_MESSAGE         "200 rtstim v0.1 - ready"
+
+#define _DEBUG
+#ifdef _DEBUG
+  #define DEBUG_PRINT_MSG(m) Serial.println(m)
+  #define DEBUG_PRINT(m, c) {Serial.print(m); Serial.println(c);}
+#else
+  #define DEBUG_PRINT_MSG(m) {}
+  #define DEBUG_PRINT(m, c) {}
+#endif  
 /*
 ** Simple protocol
 ** - PROGRAM: start the definition of stimuli
@@ -14,16 +34,18 @@
 ** - STOP: stop the current stimulation, set mode to WAITING
 */
 
-enum commands_t { PROGRAM = 'P', STIM = 'S', STOP = 'A', OK = 'O', CODE = 'C', ITI = 'I' };
+enum commands_t { PROGRAM = 'P', STIM = 'S', STOP = 'A', OK = 'O', CODE = 'C', ITI = 'I', VER = 'V' };
 
 typedef struct {
-    int code;    //which pin to write 
-    int iti;     //inter trial interval
+  char code_low;    //which pin to write to PORTB 
+  char code_high;    //which pin to write to PORTD
+  int iti;     //inter trial interval
 } stimulus_t;
 
 // constants won't change. Used here to 
 // set pin numbers:
-const int ledPin =  7;      // the number of the LED pin
+const int ledPin =  2;      // the number of the LED pin
+const int pushPin =  3;      // the number of the push button pin
 const int num_ports = 8;
 
 
@@ -41,6 +63,8 @@ long previousMillis = 0;        // will store last time LED was updated
 int num_stimuli = 0;
 stimulus_t stimuli[100];
 long trigger_len = 500; //us not ms
+long repetition_count = 0;
+long repetition_time = 0;
 
 void setup() {
   //ensure mode at startup is WAITING for commands
@@ -62,9 +86,15 @@ int read_command()
 {
   if (Serial.available() > 0)
   {
-     return Serial.read();
+     int cmd = Serial.read();
+     //clear newline char
+     Serial.flush();
+     return cmd;
   }
+  return NONE;
 }
+//
+// Wait for the Serial 
 bool wait_serial_timeout(int timeout)
 {
   int count = 0;
@@ -74,7 +104,7 @@ bool wait_serial_timeout(int timeout)
   }
   return count <= timeout ? true : false;
 }
-//non-reentrant code !
+//WARNING: non-reentrant code !
 char *read_serial_string()
 {
   bool stop = false;
@@ -88,7 +118,7 @@ char *read_serial_string()
     if (Serial.available() > 0)
     {
       buf[i] = Serial.read();
-      if (buf[i] == '\n') 
+      if (buf[i] == '\n' || buf[i] == '.') 
       {
         buf[i] = 0;
         stop = true;
@@ -119,34 +149,72 @@ bool read_serial_int(int *out)
   }
 }
 
+bool read_serial_long(long *out)
+{
+  char *str = read_serial_string();
+  if (str[0] == 0) //empty string
+    return false;
+  else
+  {
+    *out = atol(str);
+    return true;
+  }
+}
 
-int check_command_mode()
+int check_command_mode(int previous)
 {
   int cmd = read_command();
   if (cmd != NONE)
   {
     //set the device to programming mode
     if (cmd == PROGRAM) return PROGRAMMING;
-    if (cmd == STIM) return STIMULATING;
+    else if (cmd == STIM && mode == READY) 
+      return STIMULATING;
+    else if (cmd == VER)
+      Serial.println(WELCOME_MESSAGE);
+    else if (cmd == STIM && mode != READY) 
+      Serial.println(ERR_NOT_READY);
   }
-  return WAITING;
+  return previous;
 }
 
 int do_programming()
 {
-  Serial.println("Start programming mode");
+  Serial.println("200 Start programming mode");
   if (wait_serial_timeout(DEFAULT_TIMEOUT))
   {
     if (!read_serial_int(&num_stimuli)) return WAITING;
+    DEBUG_PRINT("200 Total stimuli to program: ", num_stimuli);
+
+    if (num_stimuli > MAX_STIMULI)
+    {
+      num_stimuli = 0;
+      Serial.println(ERR_TOO_MANY_STIM);
+      Serial.flush();
+      return WAITING;
+    }
     for (int i=0; i<num_stimuli; i++)
     {
       int tmp = 0;
-      if (!read_serial_int(&tmp)) return WAITING;
-      stimuli[i].code = tmp;
 
+      DEBUG_PRINT("200 Please Input code for stim #", i+1);
+      if (!read_serial_int(&tmp)) return WAITING;
+      stimuli[i].code_low = char(tmp & B00111111);
+      stimuli[i].code_high = char(tmp & B11000000);
+      
+      DEBUG_PRINT("Code: ", tmp);
+      DEBUG_PRINT("200 Please Input length for stim #", i+1);
       if (!read_serial_int(&tmp)) return WAITING;
       stimuli[i].iti = tmp;
+      DEBUG_PRINT("ITI: ", tmp);
     }
+    DEBUG_PRINT_MSG("200 Please enter Num of repetitions:"); 
+    if (!read_serial_long(&repetition_count)) return WAITING;
+    DEBUG_PRINT_MSG("200 Please enter time of repetitions:"); 
+    if (!read_serial_long(&repetition_time)) return WAITING;
+
+    Serial.println("200 Programmin finished.");
+
     return READY;
   }
 }
@@ -157,7 +225,44 @@ int do_programming()
 //
 int do_stimulation()
 {
-  //yet to start...
+  for (int r=0; r<repetition_count; r++)
+  {
+    fire_stimulus();
+    long target = micros() + repetition_time*100;
+    while (target > micros())
+      /* WAIT */;
+  }
+  Serial.println("200 Stimulation Finished. Ready");
+  return READY;
+}
+
+void fire_stimulus()
+{
+  for (int i=0; i<num_stimuli; i++)
+  {
+    //TODO: handle overflow of micros() function
+    long start = micros(); 
+    PORTB = PORTB | stimuli[i].code_low;
+    PORTD = PORTD | stimuli[i].code_high;
+    long target = start + trigger_len;
+    digitalWrite(ledPin, HIGH);
+    while (target > micros())
+      /* WAIT TRIGGER LENGTH */;
+
+    //set the port to LOW
+    PORTB = PORTB & B11000000;
+    PORTD = PORTD & B00111111;
+    digitalWrite(ledPin, LOW);
+    DEBUG_PRINT("Stimulus fired: ", i+1);
+    target = start + long(stimuli[i].iti) * 100;
+
+    DEBUG_PRINT("Waiting for :", target);
+    DEBUG_PRINT("Now is: ", micros());
+    while (target > micros())
+      /* WAIT ITI TIME */;
+      
+  }
+
 }
 
 void loop()
@@ -166,20 +271,24 @@ void loop()
   {
     case WAITING:
     case READY:
-      mode = check_command_mode();
+      mode = check_command_mode(mode);
       break;
     case PROGRAMMING:
       mode = do_programming();
       if (mode == WAITING) 
-        Serial.println("Programming mode aborted.");
+        Serial.println(ERR_PROGRAMMING_ABORT);
       else if (mode == READY) 
-        Serial.println("Programming OK, ready to stimulate");
+        Serial.println(PROGRAMMING_OK);
       break;
 
     case STIMULATING:
+      mode = do_stimulation();
+      if (mode == WAITING) 
+        Serial.println(PROGRAMMING_OK);
+
       break;
     default:
-      Serial.println("Unknow mode. switching to WAITING");
+      Serial.println(ERR_MODE_UNKNOWN);
       mode = WAITING;
   };
 }
