@@ -18,12 +18,21 @@ public:
     bool insertRows(int position, int rows, const QModelIndex &index=QModelIndex());
     bool removeRows(int position, int rows, const QModelIndex &index=QModelIndex());
     QString getModelXml();
+    QString getProgramString();
     void fillModelFromXml(QString xml);
+
+    void setInterval(int interval) { train_interval = interval;};
+    int getInterval() { return train_interval; };
+
+    void setCount(int count) {train_count = count; };
+    int getCount() { return train_count; }
 signals:
 
 public slots:
 
 private:
+    int train_interval;
+    int train_count;
     //column count = num of outputs + name + length columns
     #define COLUMN_COUNT (10);
     typedef struct TriggerRecord {

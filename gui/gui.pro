@@ -15,3 +15,9 @@ HEADERS += etriggermain.h \
     checkboxdelegate.h
 FORMS += etriggermain.ui
 RESOURCES += resources.qrc
+
+INCLUDEPATH  += ./qextserialport/src
+
+CONFIG(debug, debug|release):LIBS  += -lqextserialportd
+else:LIBS  += -lqextserialport
+win32:LIBS += -lsetupapi

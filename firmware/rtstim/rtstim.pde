@@ -4,7 +4,7 @@
 **  http://www.grsoft.org
 */
 
-//define version and welcome message here:
+// hard coded constants
 #define DEFAULT_TIMEOUT 10000
 #define MAX_STIMULI     100
 
@@ -19,7 +19,7 @@
 #define PROGRAMMING_OK          "201 Programming OK, Ready to stimulate"
 #define WELCOME_MESSAGE         "200 rtstim v0.1 - ready"
 
-#define _DEBUG
+//#define _DEBUG
 #ifdef _DEBUG
   #define DEBUG_PRINT_MSG(m) Serial.println(m)
   #define DEBUG_PRINT(m, c) {Serial.print(m); Serial.println(c);}
@@ -71,7 +71,7 @@ void setup() {
   mode = WAITING;
   // set the digital pin as output:
   pinMode(ledPin, OUTPUT);      
-
+  digitalWrite(ledPin, HIGH);
   //set the ports used for trigering to OUTPUT mode
   DDRB = B00111111;
   DDRD = DDRD | B11000000;
@@ -230,14 +230,24 @@ int do_stimulation()
     fire_stimulus();
     long target = micros() + repetition_time*100;
     while (target > micros())
-      /* WAIT */;
+    {
+      if (Serial.available() > 0)
+      {
+        if (Serial.read() == 'A')
+        {
+          Serial.println(ERR_STIMULATION_ABORT);
+          return READY;
+        }
+      }
+    }
   }
-  Serial.println("200 Stimulation Finished. Ready");
+  Serial.println("\n200 Stimulation Finished. Ready");
   return READY;
 }
 
 void fire_stimulus()
 {
+  digitalWrite(ledPin, LOW);
   for (int i=0; i<num_stimuli; i++)
   {
     //TODO: handle overflow of micros() function
@@ -245,14 +255,14 @@ void fire_stimulus()
     PORTB = PORTB | stimuli[i].code_low;
     PORTD = PORTD | stimuli[i].code_high;
     long target = start + trigger_len;
-    digitalWrite(ledPin, HIGH);
+    
     while (target > micros())
       /* WAIT TRIGGER LENGTH */;
 
     //set the port to LOW
     PORTB = PORTB & B11000000;
     PORTD = PORTD & B00111111;
-    digitalWrite(ledPin, LOW);
+    
     DEBUG_PRINT("Stimulus fired: ", i+1);
     target = start + long(stimuli[i].iti) * 100;
 
@@ -262,6 +272,8 @@ void fire_stimulus()
       /* WAIT ITI TIME */;
       
   }
+  digitalWrite(ledPin, HIGH);
+  Serial.print("*");
 
 }
 

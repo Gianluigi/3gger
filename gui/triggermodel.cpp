@@ -5,6 +5,8 @@
 TriggerModel::TriggerModel(QObject *parent) :
     QAbstractTableModel(parent)
 {
+    train_count = 1;
+    train_interval = 1000;
 }
 
 int TriggerModel::rowCount(const QModelIndex &parent) const
@@ -50,7 +52,7 @@ QVariant TriggerModel::data(const QModelIndex &index, int role) const
              return row->o8;
 */
          else if (index.column() == 9)
-             return row->length;
+             return (double)row->length/10.0f;
          else
             return QVariant();
      }
@@ -168,7 +170,7 @@ bool TriggerModel::setData(const QModelIndex &index, const QVariant &value, int 
                 record->o8 = value.toBool();
 \*/
             else if (index.column() == 9)
-                record->length = value.toInt() > 0 ? value.toInt() : 0;
+                record->length = value.toFloat() > 0.5f ? (int)(value.toFloat() * 10.0f) : 5;
 
             dataSource.replace(row, record);
            // emit(dataChanged(index, index));
@@ -222,8 +224,8 @@ QString TriggerModel::getModelXml()
     doc.appendChild(root);
 
     QDomElement setting = doc.createElement("settings");
-    setting.setAttribute("tr", 1000);
-    setting.setAttribute("count", 10);
+    setting.setAttribute("tr", getInterval());
+    setting.setAttribute("count", getCount());
     setting.setAttribute("size", 500);
     root.appendChild(setting);
 
@@ -242,6 +244,29 @@ QString TriggerModel::getModelXml()
     return doc.toString();
 }
 
+QString TriggerModel::getProgramString()
+{
+    QString output = "P";
+    output.append(QString::number(dataSource.size()));
+    output.append(".");
+
+    for (int i=0; i<dataSource.size(); i++)
+    {
+        TriggerRecord *r = dataSource.at(i);
+
+        int code = r->o1 + r->o2 * 2 + r->o3 * 4 + r->o4 * 8 + r->o5 * 16 + r->o6 * 32 + r->o7 * 64 + r->o8 * 128;
+        output.append(QString::number(code));
+        output.append(".");
+        output.append(QString::number(r->length));
+        output.append(".");
+    }
+    output.append(QString::number(getCount()));
+    output.append(".");
+    output.append(QString::number(getInterval()*10));
+    output.append(".");
+
+    return output;
+}
 void TriggerModel::fillModelFromXml(QString xml)
 {
     
@@ -259,7 +284,8 @@ void TriggerModel::fillModelFromXml(QString xml)
         if(!e.isNull()) {
             if (e.tagName().toLower() == "settings")
             {
-                //nothing yet
+                setInterval(e.attribute("tr",   "1000").toInt());
+                setCount(e.attribute("count", "1").toInt());
             }
             else if (e.tagName().toLower() == "stimulus")
             {

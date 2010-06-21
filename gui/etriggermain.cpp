@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include <QFile>
 #include <QTextStream>
+#include <QtDebug>
 #include "etriggermain.h"
 #include "triggermodel.h"
 #include "checkboxdelegate.h"
@@ -17,20 +18,47 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
 
     ui->tableTriggers->setModel(model);
     ui->tableTriggers->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-    /*ui->tableTriggers->setItemDelegateForColumn(1, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(2, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(3, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(4, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(5, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(6, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(7, new CheckBoxDelegate());
-    ui->tableTriggers->setItemDelegateForColumn(8, new CheckBoxDelegate());
-*/
+    ui->spinNumTrains->setValue(model->getCount());
+    ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
+    QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
+    qDebug() << "List of ports:";
+    bool found = false;
+    for (int i = 0; i < ports.size(); i++) {
+        qDebug() << "port name:" << ports.at(i).portName;
+        qDebug() << "friendly name:" << ports.at(i).friendName;
+        qDebug() << "physical name:" << ports.at(i).physName;
+        qDebug() << "enumerator name:" << ports.at(i).enumName;
+        qDebug() << "vendor ID:" << QString::number(ports.at(i).vendorID, 16);
+        qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
+        qDebug() << "===================================";
+        if (ports.at(i).friendName == "FT232R USB UART" || ports.at(i).friendName == "USB Serial Port")
+        {
+            found = true;
+            this->port = new QextSerialPort(ports.at(i).portName, QextSerialPort::EventDriven);
+            port->setBaudRate(BAUD9600);
+            port->setFlowControl(FLOW_OFF);
+            port->setParity(PAR_NONE);
+            port->setDataBits(DATA_8);
+            port->setStopBits(STOP_2);
+            port->setTimeout(500);
+            port->open(QIODevice::ReadWrite | QIODevice::Unbuffered);
+            connect(port, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+        }
+
+
+    }
+    if (!found)
+    {
+        QMessageBox::critical(this, "USB Connection Error", tr("Cannot open the USB connection !"));
+    }
+
 }
 
 eTriggerMain::~eTriggerMain()
 {
     delete ui;
+    port->close();
+    delete port;
 }
 
 void eTriggerMain::changeEvent(QEvent *e)
@@ -58,7 +86,39 @@ void eTriggerMain::on_pushRemove_clicked()
 
 void eTriggerMain::on_pushStart_clicked()
 {
+    TriggerModel *model = static_cast<TriggerModel *> (ui->tableTriggers->model());
+    QString cmd = model->getProgramString();
 
+    ui->lcdCounter->display(0);
+    port->write(cmd.toAscii());    
+    port->write("S");
+}
+void eTriggerMain::onReadyRead()
+{
+    int avail = port->bytesAvailable();
+
+    if( avail > 0) {
+        if (port->canReadLine())
+        {
+            QByteArray linedata = port->readLine(1024);
+            if (linedata[0] == '4')
+                QMessageBox::critical(this, tr("USB Error"), linedata);
+
+        }
+        else
+        {
+            QByteArray usbdata;
+            usbdata.resize(avail);
+            int read = port->read(usbdata.data(), usbdata.size());
+            if( read > 0 ) {
+                int count = ui->lcdCounter->intValue();
+                for (int i=0; i<read; i++)
+                    if (usbdata[i] == '*')
+                        ++count;
+                ui->lcdCounter->display(count);
+            }
+        }
+    }
 }
 
 void eTriggerMain::on_actionOpen_triggered()
@@ -77,6 +137,8 @@ void eTriggerMain::on_actionOpen_triggered()
     file.close();
 
     ui->tableTriggers->setModel(model);
+    ui->spinNumTrains->setValue(model->getCount());
+    ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
 }
 
 void eTriggerMain::on_actionSave_triggered()
@@ -100,4 +162,23 @@ void eTriggerMain::on_actionSave_triggered()
         out.setCodec("UTF-8");
         out << xml;
     }
+}
+
+void eTriggerMain::on_pushStop_clicked()
+{
+    port->write("A");
+    ui->lcdCounter->display(0);
+}
+
+void eTriggerMain::on_spinNumTrains_valueChanged(int count)
+{
+     TriggerModel *model = static_cast<TriggerModel *>(ui->tableTriggers->model());
+     model->setCount(count);
+}
+
+void eTriggerMain::on_spinTrainRate_valueChanged(double freq)
+{
+    int tr = (int) (1000.0f / freq);
+    TriggerModel *model = static_cast<TriggerModel *>(ui->tableTriggers->model());
+    model->setInterval(tr);
 }
