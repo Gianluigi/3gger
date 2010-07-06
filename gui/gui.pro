@@ -1,6 +1,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-02-15T23:28:09
 # -------------------------------------------------
+TARGET = 3gger
 QT += xml \
     xmlpatterns \
     testlib
@@ -12,7 +13,8 @@ SOURCES += main.cpp \
     checkboxdelegate.cpp
 HEADERS += etriggermain.h \
     triggermodel.h \
-    checkboxdelegate.h
+    checkboxdelegate.h \
+    3gr_config.h
 FORMS += etriggermain.ui
 RESOURCES += resources.qrc
 CONFIG += debug_and_release

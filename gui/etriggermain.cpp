@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QtDebug>
+#include "3gr_config.h"
 #include "etriggermain.h"
 #include "triggermodel.h"
 #include "checkboxdelegate.h"
@@ -13,6 +14,8 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
     ui(new Ui::eTriggerMain)
 {
     ui->setupUi(this);
+    //change title
+    setWindowTitle(tr("%1 %2").arg(APP_NAME).arg(APP_VERSION));
     TriggerModel *model = new TriggerModel();
     //model->insertRow(0, QModelIndex());
 
@@ -206,4 +209,11 @@ void eTriggerMain::on_actionNew_triggered()
     ui->tableTriggers->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
     ui->spinNumTrains->setValue(model->getCount());
     ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
+}
+
+void eTriggerMain::on_actionAbout_triggered()
+{
+   QMessageBox::about(this, tr("About %1").arg(APP_NAME),
+        tr("<b>%1</b> v%2 - An application designed to send TTL triggers "
+           "to external devices by means of a USB device with high precision timing.").arg(APP_NAME).arg(APP_VERSION));
 }

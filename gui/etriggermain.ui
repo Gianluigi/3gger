@@ -59,7 +59,7 @@
            <string>Add</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="resources.qrc">
             <normaloff>:/icons/resources/icons/edit_add.png</normaloff>:/icons/resources/icons/edit_add.png</iconset>
           </property>
           <property name="iconSize">
@@ -76,7 +76,7 @@
            <string>Remove</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="resources.qrc">
             <normaloff>:/icons/resources/icons/edit_remove.png</normaloff>:/icons/resources/icons/edit_remove.png</iconset>
           </property>
           <property name="iconSize">
@@ -188,7 +188,7 @@ p, li { white-space: pre-wrap; }
            <string>Start</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="resources.qrc">
             <normaloff>:/icons/resources/icons/button_start.png</normaloff>:/icons/resources/icons/button_start.png</iconset>
           </property>
           <property name="iconSize">
@@ -205,7 +205,7 @@ p, li { white-space: pre-wrap; }
            <string>Stop</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="resources.qrc">
             <normaloff>:/icons/resources/icons/button_stop.png</normaloff>:/icons/resources/icons/button_stop.png</iconset>
           </property>
           <property name="iconSize">
@@ -269,8 +269,15 @@ border-color: rgb(0, 255, 13);</string>
     </property>
     <addaction name="actionSerial_Port_2"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -322,10 +329,20 @@ border-color: rgb(0, 255, 13);</string>
    <property name="text">
     <string>New</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>pushStart</sender>
