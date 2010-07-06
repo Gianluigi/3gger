@@ -31,7 +31,7 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
         qDebug() << "vendor ID:" << QString::number(ports.at(i).vendorID, 16);
         qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
         qDebug() << "===================================";
-        if (ports.at(i).friendName == "FT232R USB UART" || ports.at(i).friendName == "USB Serial Port")
+        if (ports.at(i).friendName == "FT232R USB UART" || ports.at(i).friendName.contains("USB Serial Port"))
         {
             found = true;
             this->port = new QextSerialPort(ports.at(i).portName, QextSerialPort::EventDriven);
@@ -43,6 +43,7 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
             port->setTimeout(500);
             port->open(QIODevice::ReadWrite | QIODevice::Unbuffered);
             connect(port, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+            statusBar()->showMessage(tr("Usb connection successful."));
         }
 
 
@@ -50,6 +51,15 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
     if (!found)
     {
         QMessageBox::critical(this, "USB Connection Error", tr("Cannot open the USB connection !"));
+        this->port = new QextSerialPort(ports.at(ports.size()-1).portName, QextSerialPort::EventDriven);
+        port->setBaudRate(BAUD9600);
+        port->setFlowControl(FLOW_OFF);
+        port->setParity(PAR_NONE);
+        port->setDataBits(DATA_8);
+        port->setStopBits(STOP_2);
+        port->setTimeout(500);
+        port->open(QIODevice::ReadWrite | QIODevice::Unbuffered);
+        connect(port, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
     }
 
 }
@@ -77,11 +87,13 @@ void eTriggerMain::on_pushAdd_clicked()
 {
     TriggerModel *model = static_cast<TriggerModel *> (ui->tableTriggers->model());
     model->insertRow(model->rowCount(QModelIndex()), QModelIndex());
+
 }
 
 void eTriggerMain::on_pushRemove_clicked()
 {
-
+    TriggerModel *model = static_cast<TriggerModel *> (ui->tableTriggers->model());
+    model->removeRow(ui->tableTriggers->currentIndex().row());
 }
 
 void eTriggerMain::on_pushStart_clicked()
@@ -92,6 +104,7 @@ void eTriggerMain::on_pushStart_clicked()
     ui->lcdCounter->display(0);
     port->write(cmd.toAscii());    
     port->write("S");
+    qDebug() << "Sending command:" << cmd;
 }
 void eTriggerMain::onReadyRead()
 {
@@ -117,6 +130,7 @@ void eTriggerMain::onReadyRead()
                         ++count;
                 ui->lcdCounter->display(count);
             }
+            qDebug() << "Received data: " << usbdata;
         }
     }
 }
@@ -181,4 +195,15 @@ void eTriggerMain::on_spinTrainRate_valueChanged(double freq)
     int tr = (int) (1000.0f / freq);
     TriggerModel *model = static_cast<TriggerModel *>(ui->tableTriggers->model());
     model->setInterval(tr);
+}
+
+void eTriggerMain::on_actionNew_triggered()
+{
+    TriggerModel *model = new TriggerModel();
+    //model->insertRow(0, QModelIndex());
+
+    ui->tableTriggers->setModel(model);
+    ui->tableTriggers->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    ui->spinNumTrains->setValue(model->getCount());
+    ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
 }

@@ -24,6 +24,7 @@ private:
     QextSerialPort *port;
 
 private slots:
+    void on_actionNew_triggered();
     void on_spinTrainRate_valueChanged(double );
     void on_spinNumTrains_valueChanged(int );
     void on_pushStop_clicked();

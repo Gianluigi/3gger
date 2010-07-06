@@ -5,7 +5,7 @@
 */
 
 // hard coded constants
-#define DEFAULT_TIMEOUT 10000
+#define DEFAULT_TIMEOUT 1000
 #define MAX_STIMULI     100
 
 // Error messages
@@ -110,7 +110,7 @@ char *read_serial_string()
   bool stop = false;
   static char buf[128];
   int i = 0;
-  int timeout = millis();
+  long timeout = millis();
 
   buf[sizeof(buf)-1] = 0;
   while (!stop && i < sizeof(buf)-1)
@@ -227,9 +227,9 @@ int do_stimulation()
 {
   for (int r=0; r<repetition_count; r++)
   {
-    fire_stimulus();
     long target = micros() + repetition_time*100;
-    while (target > micros())
+    fire_stimulus();
+    while (target > micros() && repetition_count > 1)
     {
       if (Serial.available() > 0)
       {
