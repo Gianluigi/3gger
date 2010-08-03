@@ -6,6 +6,7 @@
 #include <qextserialport.h>
 #include <QList>
 
+
 namespace Ui {
     class eTriggerMain;
 }
@@ -18,12 +19,18 @@ public:
 
 protected:
     void changeEvent(QEvent *e);
+    void closeEvent(QCloseEvent *event);
 
 private:
     Ui::eTriggerMain *ui;
     QextSerialPort *port;
+    QString curFile;
+    bool saveProtocol(QString filename);
+    bool trySaveProtocol();
 
 private slots:
+    void on_actionSave_As_triggered();
+    void on_actionExit_triggered();
     void on_actionAbout_triggered();
     void on_actionNew_triggered();
     void on_spinTrainRate_valueChanged(double );
@@ -35,6 +42,7 @@ private slots:
     void on_pushRemove_clicked();
     void on_pushAdd_clicked();
     void onReadyRead();
+    void documentWasModified();
 };
 
 #endif // ETRIGGERMAIN_H

@@ -11,7 +11,9 @@ syntax: glob
 # switch to regexp syntax.
 syntax: regexp
 ^Crystal Clear/
-gui\.app
+3gger\.app
+.*.user
+Makefile\.*
 \.DS_Store
 plist
 moc_

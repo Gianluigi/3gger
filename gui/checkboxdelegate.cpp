@@ -13,6 +13,7 @@ QWidget *CheckBoxDelegate::createEditor(QWidget *parent,
     const QStyleOptionViewItem &/* option */,
     const QModelIndex & index ) const
 {
+    Q_UNUSED(index);
     QCheckBox *editor = new QCheckBox(parent);
     return editor;
 }
@@ -27,7 +28,7 @@ void CheckBoxDelegate::setEditorData(QWidget *editor,
 void CheckBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
                                     const QModelIndex &index) const
  {
-        bool value = index.model()->data(index, Qt::EditRole).toBool();
+        //bool value = index.model()->data(index, Qt::EditRole).toBool();
 
         QCheckBox *CheckBox = static_cast<QCheckBox*>(editor);
         model->setData(index, CheckBox->isChecked(), Qt::EditRole);

@@ -21,10 +21,10 @@ public:
     QString getProgramString();
     void fillModelFromXml(QString xml);
 
-    void setInterval(int interval) { train_interval = interval;};
-    int getInterval() { return train_interval; };
+    void setInterval(int interval) { train_interval = interval; emit(dataChanged(QModelIndex(), QModelIndex()));}
+    int getInterval() { return train_interval; }
 
-    void setCount(int count) {train_count = count; };
+    void setCount(int count) {train_count = count; emit(dataChanged(QModelIndex(), QModelIndex()));}
     int getCount() { return train_count; }
 signals:
 
@@ -36,7 +36,7 @@ private:
     //column count = num of outputs + name + length columns
     #define COLUMN_COUNT (10);
     typedef struct TriggerRecord {
-        TriggerRecord() : name(tr("<undef>")), length(10), o1(false), o2(false), o3(false), o4(false),  o5(false), o6(false), o7(false), o8(false)
+        TriggerRecord() : name(tr("<undef>")), o1(false), o2(false), o3(false), o4(false),  o5(false), o6(false), o7(false), o8(false), length(10)
         {};
         QString name;
         bool o1;

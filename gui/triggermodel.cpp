@@ -152,28 +152,12 @@ bool TriggerModel::setData(const QModelIndex &index, const QVariant &value, int 
 
             if (index.column() == 0)
                 record->name = value.toString();
-           /* else if (index.column() == 1)
-                record->o1 = value.toBool();
-            else if (index.column() == 2)
-                record->o2 = value.toBool();
-            else if (index.column() == 3)
-                record->o3 = value.toBool();
-            else if (index.column() == 4)
-                record->o4 = value.toBool();
-            else if (index.column() == 5)
-                record->o5 = value.toBool();
-            else if (index.column() == 6)
-                record->o6 = value.toBool();
-            else if (index.column() == 7)
-                record->o7 = value.toBool();
-            else if (index.column() == 8)
-                record->o8 = value.toBool();
-\*/
+
             else if (index.column() == 9)
                 record->length = value.toFloat() > 0.5f ? (int)(value.toFloat() * 10.0f) : 5;
 
             dataSource.replace(row, record);
-           // emit(dataChanged(index, index));
+            emit(dataChanged(index, index));
 
             return true;
         }
@@ -200,7 +184,7 @@ bool TriggerModel::setData(const QModelIndex &index, const QVariant &value, int 
                 record->o8 = value.toBool();
 
             dataSource.replace(row, record);
-           // emit(dataChanged(index, index));
+            emit(dataChanged(index, index));
 
             return true;
         }
