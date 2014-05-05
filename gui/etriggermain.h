@@ -1,7 +1,7 @@
 #ifndef ETRIGGERMAIN_H
 #define ETRIGGERMAIN_H
 
-#include <QMainWindow>
+#include <QtWidgets/QMainWindow>
 #include <qextserialenumerator.h>
 #include <qextserialport.h>
 #include <QList>

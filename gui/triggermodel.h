@@ -35,7 +35,7 @@ private:
     int train_count;
     //column count = num of outputs + name + length columns
     #define COLUMN_COUNT (10);
-    typedef struct TriggerRecord {
+    struct TriggerRecord {
         TriggerRecord() : name(tr("<undef>")), o1(false), o2(false), o3(false), o4(false),  o5(false), o6(false), o7(false), o8(false), length(10)
         {};
         QString name;

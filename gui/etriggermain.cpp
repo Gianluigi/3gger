@@ -1,5 +1,5 @@
-#include <QFileDialog>
-#include <QMessageBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 #include <QFile>
 #include <QTextStream>
 #include <QtDebug>
@@ -21,7 +21,7 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
     //model->insertRow(0, QModelIndex());
 
     ui->tableTriggers->setModel(model);
-    ui->tableTriggers->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    ui->tableTriggers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->spinNumTrains->setValue(model->getCount());
     ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
 
@@ -131,7 +131,7 @@ void eTriggerMain::on_pushStart_clicked()
     QString cmd = model->getProgramString();
 
     ui->lcdCounter->display(0);
-    port->write(cmd.toAscii());    
+    port->write(cmd.toLatin1());
     port->write("S");
     qDebug() << "Sending command:" << cmd;
 }
@@ -273,7 +273,7 @@ void eTriggerMain::on_actionNew_triggered()
 
     if (!trySaveProtocol()) return;
     ui->tableTriggers->setModel(model);
-    ui->tableTriggers->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    ui->tableTriggers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->spinNumTrains->setValue(model->getCount());
     ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
     setWindowModified(true);

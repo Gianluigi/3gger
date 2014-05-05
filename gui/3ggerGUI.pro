@@ -1,7 +1,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-02-15T23:28:09
 # -------------------------------------------------
-QT += xml \
+QT +=core gui widgets xml \
     xmlpatterns
 TARGET = 3gger
 TEMPLATE = app
@@ -16,8 +16,8 @@ HEADERS += etriggermain.h \
 FORMS += etriggermain.ui
 RESOURCES += resources.qrc
 CONFIG += debug_and_release
-INCLUDEPATH  += ./qextserialport/src
-QMAKE_LIBDIR += ./qextserialport/src/build
+INCLUDEPATH  += ../libs/qextserialport/src
+QMAKE_LIBDIR += ..libs/qextserialport/src/build
 
 CONFIG(debug, debug|release):LIBS  += -lqextserialportd
 else:LIBS  += -lqextserialport1

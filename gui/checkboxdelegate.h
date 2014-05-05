@@ -4,8 +4,8 @@
 #include <QModelIndex>
 #include <QObject>
 #include <QSize>
-#include <QCheckBox>
-#include <QStyledItemDelegate>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QStyledItemDelegate>
 
 class CheckBoxDelegate : public QStyledItemDelegate
 {
