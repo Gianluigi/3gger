@@ -17,7 +17,6 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
 {
     ui->setupUi(this);
     //change title
-    setWindowTitle(tr("%1 %2").arg(APP_NAME).arg(APP_VERSION));
     TriggerModel *model = new TriggerModel();
     //model->insertRow(0, QModelIndex());
 
@@ -79,6 +78,7 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
 
 }
 
+
 eTriggerMain::~eTriggerMain()
 {
     delete ui;
@@ -99,6 +99,11 @@ void eTriggerMain::changeEvent(QEvent *e)
     default:
         break;
     }
+}
+
+void eTriggerMain::setTitle(QString title)
+{
+    setWindowTitle(tr("%1 %2 - %3 [*]").arg(APP_NAME).arg(APP_VERSION).arg(title));
 }
 
 void eTriggerMain::documentWasModified()
@@ -179,6 +184,7 @@ void eTriggerMain::on_actionOpen_triggered()
     ui->spinNumTrains->setValue(model->getCount());
     ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
     setWindowModified(false);
+    setTitle(filename);
     connect(ui->tableTriggers->model(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(documentWasModified()));
     curFile = filename;
     settings.setValue("mainWindow/LastOpenPath", QFileInfo(file).absolutePath());
@@ -236,6 +242,7 @@ bool eTriggerMain::saveProtocol(QString fileName)
     out.setCodec("UTF-8");
     out << xml;
     setWindowModified(false);
+    setTitle(fileName);
     curFile = fileName;
     settings.setValue("mainWindow/LastOpenPath", QFileInfo(file).absolutePath());
     return true;
@@ -270,6 +277,7 @@ void eTriggerMain::on_actionNew_triggered()
     ui->spinNumTrains->setValue(model->getCount());
     ui->spinTrainRate->setValue(1000.0f / (float)model->getInterval());
     setWindowModified(true);
+    setTitle("new prototocol");
     curFile.clear();
 }
 
@@ -289,4 +297,52 @@ void eTriggerMain::on_actionSave_As_triggered()
 {
     curFile.clear();
     saveProtocol(curFile);
+}
+
+void eTriggerMain::on_actionSerial_Port_2_triggered()
+{
+    if (port)
+    {
+        port->close();
+        delete port;
+        port = 0;
+    }
+    QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
+    qDebug() << "List of ports:";
+    bool found = false;
+    for (int i = 0; i < ports.size(); i++) {
+        qDebug() << "port name:" << ports.at(i).portName;
+        qDebug() << "friendly name:" << ports.at(i).friendName;
+        qDebug() << "physical name:" << ports.at(i).physName;
+        qDebug() << "enumerator name:" << ports.at(i).enumName;
+        qDebug() << "vendor ID:" << QString::number(ports.at(i).vendorID, 16);
+        qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
+        qDebug() << "===================================";
+        if (ports.at(i).friendName == "FT232R USB UART" || //Mac OS X driver name
+            ports.at(i).friendName.contains("USB Serial Port")) //Windows driver name
+        {
+            found = true;
+            this->port = new QextSerialPort(ports.at(i).portName, QextSerialPort::EventDriven);
+            port->setBaudRate(BAUD9600);
+            port->setFlowControl(FLOW_OFF);
+            port->setParity(PAR_NONE);
+            port->setDataBits(DATA_8);
+            port->setStopBits(STOP_2);
+            port->setTimeout(500);
+            port->open(QIODevice::ReadWrite | QIODevice::Unbuffered);
+            connect(port, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+            statusBar()->showMessage(tr("Usb connection successful."));
+            this->ui->pushStart->setEnabled(true);
+            this->ui->pushStop->setEnabled(true);
+        }
+
+
+    }
+    if (!found)
+    {
+        QMessageBox::critical(this, "USB Connection Error", tr("Cannot open the USB connection !"));
+        this->ui->pushStart->setEnabled(false);
+        this->ui->pushStop->setEnabled(false);
+    }
+
 }

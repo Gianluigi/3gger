@@ -27,8 +27,10 @@ private:
     QString curFile;
     bool saveProtocol(QString filename);
     bool trySaveProtocol();
+    void setTitle(QString title);
 
 private slots:
+    void on_actionSerial_Port_2_triggered();
     void on_actionSave_As_triggered();
     void on_actionExit_triggered();
     void on_actionAbout_triggered();

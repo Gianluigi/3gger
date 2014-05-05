@@ -72,7 +72,7 @@ void setup() {
   // set the digital pin as output:
   pinMode(ledPin, OUTPUT);      
   digitalWrite(ledPin, HIGH);
-  //set the ports used for trigering to OUTPUT mode
+  //set the ports used for triggering to OUTPUT mode
   DDRB = B00111111;
   DDRD = DDRD | B11000000;
   Serial.begin(9600);
