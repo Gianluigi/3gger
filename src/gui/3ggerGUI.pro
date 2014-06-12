@@ -16,11 +16,11 @@ HEADERS += etriggermain.h \
 FORMS += etriggermain.ui
 RESOURCES += resources.qrc
 CONFIG += debug_and_release
-INCLUDEPATH  += ../libs/qextserialport/src
-QMAKE_LIBDIR += ..libs/qextserialport/src/build
-
+INCLUDEPATH  += ../qextserialport/src
+QMAKE_LIBDIR += $$PWD/../../build/libs/
+DESTDIR = $$PWD/../../build/debug
 CONFIG(debug, debug|release):LIBS  += -lqextserialportd
-else:LIBS  += -lqextserialport1
+else:LIBS  += -lqextserialport
 
 # --------------------------------------------
 # Windows Platform specific options

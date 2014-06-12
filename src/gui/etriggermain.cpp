@@ -42,10 +42,11 @@ eTriggerMain::eTriggerMain(QWidget *parent) :
         qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
         qDebug() << "===================================";
         if (ports.at(i).friendName == "FT232R USB UART" || //Mac OS X driver name
+            ports.at(i).portName == "ttyACM0" || //Linux  driver name
             ports.at(i).friendName.contains("USB Serial Port")) //Windows driver name
         {
             found = true;
-            this->port = new QextSerialPort(ports.at(i).portName, QextSerialPort::EventDriven);
+            this->port = new QextSerialPort(ports.at(i).physName, QextSerialPort::EventDriven);
             port->setBaudRate(BAUD9600);
             port->setFlowControl(FLOW_OFF);
             port->setParity(PAR_NONE);
