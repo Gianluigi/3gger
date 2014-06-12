@@ -1,7 +1,7 @@
 /* vi:ts=2 sw=2: 
 ** 
 **  Author: Gianluigi Rubino
-**  http://www.grsoft.org
+**  http://www.incorrect-code.org
 */
 
 // hard coded constants
@@ -223,27 +223,6 @@ int do_programming()
 //
 // the critical part !!
 //
-int do_stimulation()
-{
-  for (int r=0; r<repetition_count; r++)
-  {
-    long target = micros() + repetition_time*100;
-    fire_stimulus();
-    while (target > micros() && repetition_count > 1)
-    {
-      if (Serial.available() > 0)
-      {
-        if (Serial.read() == 'A')
-        {
-          Serial.println(ERR_STIMULATION_ABORT);
-          return READY;
-        }
-      }
-    }
-  }
-  Serial.println("\n200 Stimulation Finished. Ready");
-  return READY;
-}
 
 void fire_stimulus()
 {
@@ -275,6 +254,28 @@ void fire_stimulus()
   digitalWrite(ledPin, HIGH);
   Serial.print("*");
 
+}
+
+int do_stimulation()
+{
+  for (int r=0; r<repetition_count; r++)
+  {
+    long target = micros() + repetition_time*100;
+    fire_stimulus();
+    while (target > micros() && repetition_count > 1)
+    {
+      if (Serial.available() > 0)
+      {
+        if (Serial.read() == 'A')
+        {
+          Serial.println(ERR_STIMULATION_ABORT);
+          return READY;
+        }
+      }
+    }
+  }
+  Serial.println("\n200 Stimulation Finished. Ready");
+  return READY;
 }
 
 void loop()
